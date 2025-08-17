@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Code2, Image, Send, User, LoaderCircle, BookText, LayoutDashboard } from 'lucide-react';
+import { Bot, Code2, Image, Send, User, LoaderCircle, BookText, LayoutDashboard, BookOpen, ChefHat, HeartPulse, Paintbrush, Bug } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Textarea } from '@/components/ui/textarea';
 
-type Feature = 'chat' | 'code' | 'image' | 'journal' | 'livecode';
+type Feature = 'chat' | 'code' | 'image' | 'journal' | 'livecode' | 'story' | 'recipe' | 'workout' | 'dream' | 'debugger';
 
 type Message = {
   role: 'ai' | 'user';
@@ -175,7 +175,10 @@ const CodeGenerationInterface = () => {
                 Generate Code
             </Button>
             <ScrollArea className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
-                <ReactMarkdown>{` \`${language}\n${generatedCode}\n\` `}</ReactMarkdown>
+                <ReactMarkdown>{` 
+${language}
+${generatedCode}
+ `}</ReactMarkdown>
             </ScrollArea>
         </div>
     );
@@ -374,6 +377,274 @@ const LiveCoderInterface = () => {
     );
 }
 
+const StoryWriterInterface = () => {
+    const [prompt, setPrompt] = useState('');
+    const [story, setStory] = useState('Your story will appear here.');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleGenerateStory = async () => {
+        if (!prompt.trim() || isLoading) return;
+
+        setIsLoading(true);
+        setStory('Writing your story...');
+
+        try {
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt, feature: 'story' }),
+            });
+
+            if (!response.ok) throw new Error('Failed to write story');
+
+            const data = await response.json();
+            setStory(data.text);
+        } catch (error) {
+            console.error(error);
+            setStory('Sorry, something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full p-4 space-y-4">
+            <h3 className="text-2xl font-bold">AI Story Writer</h3>
+            <Textarea 
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Give me a prompt for a story... (e.g., A robot who discovers music)"
+                className="flex-1"
+                rows={5}
+            />
+            <Button onClick={handleGenerateStory} disabled={!prompt.trim() || isLoading}>
+                {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <BookOpen className="mr-2 h-4 w-4" />}
+                Write Story
+            </Button>
+            <ScrollArea className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
+                <ReactMarkdown>{story}</ReactMarkdown>
+            </ScrollArea>
+        </div>
+    );
+}
+
+const RecipeGeneratorInterface = () => {
+    const [ingredients, setIngredients] = useState('');
+    const [recipe, setRecipe] = useState('Your recipe will appear here.');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleGenerateRecipe = async () => {
+        if (!ingredients.trim() || isLoading) return;
+
+        setIsLoading(true);
+        setRecipe('Generating your recipe...');
+
+        try {
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: ingredients, feature: 'recipe' }),
+            });
+
+            if (!response.ok) throw new Error('Failed to generate recipe');
+
+            const data = await response.json();
+            setRecipe(data.text);
+        } catch (error) {
+            console.error(error);
+            setRecipe('Sorry, something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full p-4 space-y-4">
+            <h3 className="text-2xl font-bold">AI Recipe Generator</h3>
+            <Textarea 
+                value={ingredients}
+                onChange={(e) => setIngredients(e.target.value)}
+                placeholder="List your ingredients... (e.g., chicken, rice, broccoli)"
+                className="flex-1"
+                rows={5}
+            />
+            <Button onClick={handleGenerateRecipe} disabled={!ingredients.trim() || isLoading}>
+                {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <ChefHat className="mr-2 h-4 w-4" />}
+                Generate Recipe
+            </Button>
+            <ScrollArea className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
+                <ReactMarkdown>{recipe}</ReactMarkdown>
+            </ScrollArea>
+        </div>
+    );
+}
+
+const WorkoutPlannerInterface = () => {
+    const [goals, setGoals] = useState('');
+    const [plan, setPlan] = useState('Your workout plan will appear here.');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleGeneratePlan = async () => {
+        if (!goals.trim() || isLoading) return;
+
+        setIsLoading(true);
+        setPlan('Generating your workout plan...');
+
+        try {
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: goals, feature: 'workout' }),
+            });
+
+            if (!response.ok) throw new Error('Failed to generate plan');
+
+            const data = await response.json();
+            setPlan(data.text);
+        } catch (error) {
+            console.error(error);
+            setPlan('Sorry, something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full p-4 space-y-4">
+            <h3 className="text-2xl font-bold">Personalized Workout Planner</h3>
+            <Textarea 
+                value={goals}
+                onChange={(e) => setGoals(e.target.value)}
+                placeholder="Describe your fitness goals... (e.g., build muscle, lose weight)"
+                className="flex-1"
+                rows={5}
+            />
+            <Button onClick={handleGeneratePlan} disabled={!goals.trim() || isLoading}>
+                {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <HeartPulse className="mr-2 h-4 w-4" />}
+                Generate Plan
+            </Button>
+            <ScrollArea className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
+                <ReactMarkdown>{plan}</ReactMarkdown>
+            </ScrollArea>
+        </div>
+    );
+}
+
+const DreamVisualizerInterface = () => {
+    const [description, setDescription] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleVisualizeDream = async () => {
+        if (!description.trim() || isLoading) return;
+
+        setIsLoading(true);
+        setImageUrl('');
+
+        try {
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: description, feature: 'dream' }),
+            });
+
+            if (!response.ok) throw new Error('Failed to visualize dream');
+
+            const data = await response.json();
+            setImageUrl(data.imageUrl);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full p-4 space-y-4">
+            <h3 className="text-2xl font-bold">Dream Visualizer</h3>
+            <Textarea 
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe your dream in detail..."
+                className="flex-1"
+                rows={5}
+            />
+            <Button onClick={handleVisualizeDream} disabled={!description.trim() || isLoading}>
+                {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Paintbrush className="mr-2 h-4 w-4" />}
+                Visualize Dream
+            </Button>
+            {isLoading && <p>Generating image...</p>}
+            {imageUrl && (
+                <div className="flex-1 rounded-md overflow-hidden">
+                    <img src={imageUrl} alt="Dream visualization" className="w-full h-full object-cover" />
+                </div>
+            )}
+        </div>
+    );
+}
+
+const CodeDebuggerInterface = () => {
+    const [code, setCode] = useState('');
+    const [suggestion, setSuggestion] = useState('Your debugging suggestion will appear here.');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleDebugCode = async () => {
+        if (!code.trim() || isLoading) return;
+
+        setIsLoading(true);
+        setSuggestion('Debugging your code...');
+
+        try {
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: code, feature: 'debugger' }),
+            });
+
+            if (!response.ok) throw new Error('Failed to debug code');
+
+            const data = await response.json();
+            setSuggestion(data.text);
+        } catch (error) {
+            console.error(error);
+            setSuggestion('Sorry, something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full p-4 space-y-4">
+            <h3 className="text-2xl font-bold">AI Code Debugger</h3>
+            <Textarea 
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Paste your code snippet here..."
+                className="flex-1 font-mono"
+                rows={10}
+            />
+            <Button onClick={handleDebugCode} disabled={!code.trim() || isLoading}>
+                {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Bug className="mr-2 h-4 w-4" />}
+                Debug Code
+            </Button>
+            <ScrollArea className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
+                <ReactMarkdown>{suggestion}</ReactMarkdown>
+            </ScrollArea>
+        </div>
+    );
+}
+
+
 const AiPage = () => {
   const [activeFeature, setActiveFeature] = useState<Feature>('chat');
 
@@ -389,6 +660,16 @@ const AiPage = () => {
         return <DreamJournalInterface />;
       case 'livecode':
         return <LiveCoderInterface />;
+      case 'story':
+        return <StoryWriterInterface />;
+      case 'recipe':
+        return <RecipeGeneratorInterface />;
+      case 'workout':
+        return <WorkoutPlannerInterface />;
+      case 'dream':
+        return <DreamVisualizerInterface />;
+      case 'debugger':
+        return <CodeDebuggerInterface />;
       default:
         return null;
     }
@@ -418,6 +699,26 @@ const AiPage = () => {
           <Button variant={activeFeature === 'livecode' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('livecode')}> 
             <LayoutDashboard className="mr-2 h-4 w-4" />
             Live Website Coder
+          </Button>
+          <Button variant={activeFeature === 'story' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('story')}> 
+            <BookOpen className="mr-2 h-4 w-4" />
+            AI Story Writer
+          </Button>
+          <Button variant={activeFeature === 'recipe' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('recipe')}> 
+            <ChefHat className="mr-2 h-4 w-4" />
+            AI Recipe Generator
+          </Button>
+          <Button variant={activeFeature === 'workout' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('workout')}> 
+            <HeartPulse className="mr-2 h-4 w-4" />
+            Workout Planner
+          </Button>
+          <Button variant={activeFeature === 'dream' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('dream')}> 
+            <Paintbrush className="mr-2 h-4 w-4" />
+            Dream Visualizer
+          </Button>
+          <Button variant={activeFeature === 'debugger' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('debugger')}> 
+            <Bug className="mr-2 h-4 w-4" />
+            AI Code Debugger
           </Button>
         </nav>
       </aside>
