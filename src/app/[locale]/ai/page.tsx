@@ -10,9 +10,15 @@ import { Textarea } from '@/components/ui/textarea';
 
 type Feature = 'chat' | 'code' | 'image';
 
+type Message = {
+  role: 'ai' | 'user';
+  content: string;
+  personality?: string;
+};
+
 const ChatInterface = () => {
-  const [messages, setMessages] = useState([
-    { role: 'ai', content: 'Hello! How can I help you today?' },
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'ai', content: 'Hello! How can I help you today?', personality: 'Default' },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +32,7 @@ const ChatInterface = () => {
 
   const handleSendMessage = async () => {
     if (input.trim() && !isLoading) {
-      const newMessages = [...messages, { role: 'user', content: input }];
+      const newMessages: Message[] = [...messages, { role: 'user', content: input }];
       setMessages(newMessages);
       setInput('');
       setIsLoading(true);
@@ -43,7 +49,7 @@ const ChatInterface = () => {
         if (!response.ok) throw new Error('Failed to get response from AI');
 
         const data = await response.json();
-        setMessages([...newMessages, { role: 'ai', content: data.text }]);
+        setMessages([...newMessages, { role: 'ai', content: data.text, personality: data.personality }]);
       } catch (error) {
         console.error(error);
         setMessages([
@@ -63,14 +69,21 @@ const ChatInterface = () => {
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}
+              >
                 {msg.role === 'ai' && (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white flex-shrink-0">
                     <Bot className="h-6 w-6" />
                   </div>
                 )}
                 <div
-                  className={`max-w-xl rounded-lg p-4 prose dark:prose-invert ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-800'}`}>
+                  className={`max-w-xl rounded-lg p-4 prose dark:prose-invert ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-800'}`}
+                >
+                  {msg.personality && (
+                    <div className="text-xs font-mono p-1 bg-gray-300 dark:bg-gray-700 rounded-md mb-2 inline-block">
+                      Personality: {msg.personality}
+                    </div>
+                  )}
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
                 {msg.role === 'user' && (
