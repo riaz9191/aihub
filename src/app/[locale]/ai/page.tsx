@@ -168,6 +168,58 @@ const CodeGenerationInterface = () => {
     );
 }
 
+const ImageAnalysisInterface = () => {
+    const [image, setImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [prompt, setPrompt] = useState('');
+    const [analysis, setAnalysis] = useState('Analysis will appear here.');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setImage(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleAnalyze = async () => {
+        // Placeholder for API call
+        console.log('Analyzing image...', { image, prompt });
+    };
+
+    return (
+        <div className="flex flex-col h-full p-4 space-y-4">
+            <h3 className="text-2xl font-bold">Image Analysis</h3>
+            <div className="flex-1 grid grid-cols-2 gap-4">
+                <div className="flex flex-col space-y-4">
+                    <Input type="file" accept="image/*" onChange={handleImageChange} />
+                    {imagePreview && (
+                        <div className="flex-1 rounded-md overflow-hidden">
+                            <img src={imagePreview} alt="Image preview" className="w-full h-full object-cover" />
+                        </div>
+                    )}
+                </div>
+                <div className="flex flex-col space-y-4">
+                    <Textarea 
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Optional: Ask something specific about the image..."
+                        className="flex-1"
+                    />
+                    <Button onClick={handleAnalyze} disabled={!image || isLoading}>
+                        {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Image className="mr-2 h-4 w-4" />}
+                        Analyze Image
+                    </Button>
+                </div>
+            </div>
+            <ScrollArea className="h-48 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
+                <ReactMarkdown>{analysis}</ReactMarkdown>
+            </ScrollArea>
+        </div>
+    );
+}
+
 const AiPage = () => {
   const [activeFeature, setActiveFeature] = useState<Feature>('chat');
 
@@ -178,7 +230,7 @@ const AiPage = () => {
       case 'code':
         return <CodeGenerationInterface />;
       case 'image':
-        return <div className="p-4"><h3 className="text-2xl font-bold">Image Analysis (Coming Soon)</h3></div>;
+        return <ImageAnalysisInterface />;
       default:
         return null;
     }
