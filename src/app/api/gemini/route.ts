@@ -57,6 +57,13 @@ export async function POST(req: NextRequest) {
         const text = response.text();
         return NextResponse.json({ text });
       }
+      else if (feature === 'journal') {
+        const finalPrompt = `You are a thoughtful journal analyzer. Read the following entry and provide: 1. A summary of the key events and feelings. 2. An analysis of the overall mood (e.g., happy, anxious, reflective). 3. For dreams, an interpretation of potential symbols and themes. Entry: ${prompt}`;
+        const result = await model.generateContent(finalPrompt);
+        const response = await result.response;
+        const text = response.text();
+        return NextResponse.json({ text });
+      }
     }
     // Handle multipart/form-data for image analysis
     else if (contentType.includes('multipart/form-data')) {

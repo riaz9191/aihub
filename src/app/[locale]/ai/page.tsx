@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Code2, Image, Send, User, LoaderCircle } from 'lucide-react';
+import { Bot, Code2, Image, Send, User, LoaderCircle, BookText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Textarea } from '@/components/ui/textarea';
 
-type Feature = 'chat' | 'code' | 'image';
+type Feature = 'chat' | 'code' | 'image' | 'journal';
 
 type Message = {
   role: 'ai' | 'user';
@@ -175,7 +175,7 @@ const CodeGenerationInterface = () => {
                 Generate Code
             </Button>
             <ScrollArea className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
-                <ReactMarkdown>{` \`\`\`${language}\n${generatedCode}\n\`\`\` `}</ReactMarkdown>
+                <ReactMarkdown>{` ```${language}\n${generatedCode}\n``` `}</ReactMarkdown>
             </ScrollArea>
         </div>
     );
@@ -256,6 +256,60 @@ const ImageAnalysisInterface = () => {
     );
 }
 
+const DreamJournalInterface = () => {
+    const [entry, setEntry] = useState('');
+    const [analysis, setAnalysis] = useState('Your journal analysis will appear here.');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleAnalyzeEntry = async () => {
+        if (!entry.trim() || isLoading) return;
+
+        setIsLoading(true);
+        setAnalysis('Analyzing your entry...');
+
+        try {
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: entry, feature: 'journal' }),
+            });
+
+            if (!response.ok) throw new Error('Failed to analyze entry');
+
+            const data = await response.json();
+            setAnalysis(data.text);
+        } catch (error) {
+            console.error(error);
+            setAnalysis('Sorry, something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full p-4 space-y-4">
+            <h3 className="text-2xl font-bold">AI Dream Journal</h3>
+            <Textarea 
+                value={entry}
+                onChange={(e) => setEntry(e.target.value)}
+                placeholder="Write about your day, your thoughts, or a dream..."
+                className="flex-1 text-lg"
+                rows={10}
+            />
+            <Button onClick={handleAnalyzeEntry} disabled={!entry.trim() || isLoading}>
+                {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <BookText className="mr-2 h-4 w-4" />}
+                Analyze Entry
+            </Button>
+            <ScrollArea className="h-64 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
+                <h4 className="font-bold mb-2">Analysis:</h4>
+                <ReactMarkdown>{analysis}</ReactMarkdown>
+            </ScrollArea>
+        </div>
+    );
+}
+
 const AiPage = () => {
   const [activeFeature, setActiveFeature] = useState<Feature>('chat');
 
@@ -267,6 +321,8 @@ const AiPage = () => {
         return <CodeGenerationInterface />;
       case 'image':
         return <ImageAnalysisInterface />;
+      case 'journal':
+        return <DreamJournalInterface />;
       default:
         return null;
     }
@@ -277,17 +333,21 @@ const AiPage = () => {
       <aside className="w-64 bg-white dark:bg-gray-950 p-4 border-r dark:border-gray-800 hidden md:block">
         <h2 className="text-xl font-bold mb-4">Features</h2>
         <nav className="space-y-2">
-          <Button variant={activeFeature === 'chat' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('chat')}>
+          <Button variant={activeFeature === 'chat' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('chat')}> 
             <Bot className="mr-2 h-4 w-4" />
             Chat
           </Button>
-          <Button variant={activeFeature === 'code' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('code')}>
+          <Button variant={activeFeature === 'code' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('code')}> 
             <Code2 className="mr-2 h-4 w-4" />
             Code Generation
           </Button>
-          <Button variant={activeFeature === 'image' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('image')}>
+          <Button variant={activeFeature === 'image' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('image')}> 
             <Image className="mr-2 h-4 w-4" />
             Image Analysis
+          </Button>
+          <Button variant={activeFeature === 'journal' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('journal')}> 
+            <BookText className="mr-2 h-4 w-4" />
+            AI Dream Journal
           </Button>
         </nav>
       </aside>
