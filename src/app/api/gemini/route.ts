@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get('content-type') || '';
 
-    // Handle JSON for text-based features (chat, code)
+    // Handle JSON for text-based features
     if (contentType.includes('application/json')) {
       const { prompt, feature, language } = await req.json();
 
@@ -41,28 +41,74 @@ export async function POST(req: NextRequest) {
       }
 
       const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' })
-      
-      if (feature === 'chat') {
-        const personality = await getPersonality(prompt);
-        const finalPrompt = `System: Adopt this personality: [${personality}]. User: ${prompt}`;
-        const result = await model.generateContent(finalPrompt);
-        const response = await result.response;
-        const text = response.text();
-        return NextResponse.json({ text, personality });
-      }
-      else if (feature === 'code') {
-        const finalPrompt = `Generate a code snippet in ${language || 'javascript'} for the following request: ${prompt}`;
-        const result = await model.generateContent(finalPrompt);
-        const response = await result.response;
-        const text = response.text();
-        return NextResponse.json({ text });
-      }
-      else if (feature === 'journal') {
-        const finalPrompt = `You are a thoughtful journal analyzer. Read the following entry and provide: 1. A summary of the key events and feelings. 2. An analysis of the overall mood (e.g., happy, anxious, reflective). 3. For dreams, an interpretation of potential symbols and themes. Entry: ${prompt}`;
-        const result = await model.generateContent(finalPrompt);
-        const response = await result.response;
-        const text = response.text();
-        return NextResponse.json({ text });
+      let finalPrompt = '';
+      let text = '';
+
+      switch (feature) {
+        case 'chat':
+          const personality = await getPersonality(prompt);
+          finalPrompt = `System: Adopt this personality: [${personality}]. User: ${prompt}`;
+          const result = await model.generateContent(finalPrompt);
+          const response = await result.response;
+          text = response.text();
+          return NextResponse.json({ text, personality });
+
+        case 'code':
+          finalPrompt = `Generate a code snippet in ${language || 'javascript'} for the following request: ${prompt}`;
+          const codeResult = await model.generateContent(finalPrompt);
+          const codeResponse = await codeResult.response;
+          text = codeResponse.text();
+          return NextResponse.json({ text });
+
+        case 'journal':
+          finalPrompt = `You are a thoughtful journal analyzer. Read the following entry and provide: 1. A summary of the key events and feelings. 2. An analysis of the overall mood (e.g., happy, anxious, reflective). 3. For dreams, an interpretation of potential symbols and themes. Entry: ${prompt}`;
+          const journalResult = await model.generateContent(finalPrompt);
+          const journalResponse = await journalResult.response;
+          text = journalResponse.text();
+          return NextResponse.json({ text });
+
+        case 'livecode':
+          finalPrompt = `Generate a complete HTML file with embedded CSS and JavaScript for the following request: ${prompt}. The output should be only the HTML code.`;
+          const livecodeResult = await model.generateContent(finalPrompt);
+          const livecodeResponse = await livecodeResult.response;
+          text = livecodeResponse.text();
+          return NextResponse.json({ text });
+
+        case 'story':
+          finalPrompt = `Write a short story based on the following prompt: ${prompt}`;
+          const storyResult = await model.generateContent(finalPrompt);
+          const storyResponse = await storyResult.response;
+          text = storyResponse.text();
+          return NextResponse.json({ text });
+
+        case 'recipe':
+          finalPrompt = `I have the following ingredients: ${prompt}. Suggest a recipe I can make.`;
+          const recipeResult = await model.generateContent(finalPrompt);
+          const recipeResponse = await recipeResult.response;
+          text = recipeResponse.text();
+          return NextResponse.json({ text });
+
+        case 'workout':
+          finalPrompt = `Based on the following fitness goals: ${prompt}, create a personalized workout plan.`;
+          const workoutResult = await model.generateContent(finalPrompt);
+          const workoutResponse = await workoutResult.response;
+          text = workoutResponse.text();
+          return NextResponse.json({ text });
+
+        case 'dream':
+          // Placeholder for image generation. Replace with a real image generation API call.
+          const imageUrl = `https://via.placeholder.com/512x512.png?text=${encodeURIComponent(prompt)}`;
+          return NextResponse.json({ imageUrl });
+
+        case 'debugger':
+          finalPrompt = `You are an expert code debugger. Analyze the following code snippet and provide a suggestion to fix the bug. Explain the bug and the fix. Code: ${prompt}`;
+          const debuggerResult = await model.generateContent(finalPrompt);
+          const debuggerResponse = await debuggerResult.response;
+          text = debuggerResponse.text();
+          return NextResponse.json({ text });
+
+        default:
+          return NextResponse.json({ error: `Unsupported feature: ${feature}` }, { status: 400 });
       }
     }
     // Handle multipart/form-data for image analysis
