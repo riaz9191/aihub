@@ -162,7 +162,7 @@ const CodeGenerationInterface = () => {
                 Generate Code
             </Button>
             <ScrollArea className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
-                <ReactMarkdown>{` ```${language}\n${generatedCode}\n``` `}</ReactMarkdown>
+                <ReactMarkdown>{` \`\`\`${language}\n${generatedCode}\n\`\`\` `}</ReactMarkdown>
             </ScrollArea>
         </div>
     );
