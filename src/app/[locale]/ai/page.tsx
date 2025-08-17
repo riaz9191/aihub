@@ -184,8 +184,31 @@ const ImageAnalysisInterface = () => {
     };
 
     const handleAnalyze = async () => {
-        // Placeholder for API call
-        console.log('Analyzing image...', { image, prompt });
+        if (!image || isLoading) return;
+
+        setIsLoading(true);
+        setAnalysis('Analyzing image...');
+
+        try {
+            const formData = new FormData();
+            formData.append('image', image);
+            formData.append('prompt', prompt);
+
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error('Failed to analyze image');
+
+            const data = await response.json();
+            setAnalysis(data.text);
+        } catch (error) {
+            console.error(error);
+            setAnalysis('Sorry, something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
