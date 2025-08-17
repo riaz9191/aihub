@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # Test Database
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: nextjs-postgres-test
+    environment:
+      POSTGRES_DB: nextjs_boilerplate_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nextjs_boilerplate_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Test Redis
+  redis-test:
+    image: redis:7-alpine
+    container_name: nextjs-redis-test
+    ports:
+      - "6380:6379"
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Test Runner
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: nextjs-test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://postgres:password@postgres-test:5432/nextjs_boilerplate_test
+      - REDIS_URL=redis://redis-test:6379
+      - CI=true
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: npm run test
+
+  # E2E Test Runner
+  e2e:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: nextjs-e2e
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://postgres:password@postgres-test:5432/nextjs_boilerplate_test
+      - REDIS_URL=redis://redis-test:6379
+      - CI=true
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - playwright-cache:/ms-playwright
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: npm run test:e2e
+
+volumes:
+  playwright-cache:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge
