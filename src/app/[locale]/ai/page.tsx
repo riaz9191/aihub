@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Code2, Image, Send, User, LoaderCircle, BookText } from 'lucide-react';
+import { Bot, Code2, Image, Send, User, LoaderCircle, BookText, LayoutDashboard } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Textarea } from '@/components/ui/textarea';
 
-type Feature = 'chat' | 'code' | 'image' | 'journal';
+type Feature = 'chat' | 'code' | 'image' | 'journal' | 'livecode';
 
 type Message = {
   role: 'ai' | 'user';
@@ -175,7 +175,7 @@ const CodeGenerationInterface = () => {
                 Generate Code
             </Button>
             <ScrollArea className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
-                <ReactMarkdown>{` ```${language}\n${generatedCode}\n``` `}</ReactMarkdown>
+                <ReactMarkdown>{` \`${language}\n${generatedCode}\n\` `}</ReactMarkdown>
             </ScrollArea>
         </div>
     );
@@ -310,6 +310,70 @@ const DreamJournalInterface = () => {
     );
 }
 
+const LiveCoderInterface = () => {
+    const [prompt, setPrompt] = useState('');
+    const [code, setCode] = useState('<!-- Your generated website will appear here -->');
+    const [iframeSrc, setIframeSrc] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleGenerate = async () => {
+        if (!prompt.trim() || isLoading) return;
+
+        setIsLoading(true);
+        setCode('// Generating code...');
+
+        try {
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt, feature: 'livecode' }),
+            });
+
+            if (!response.ok) throw new Error('Failed to generate code');
+
+            const data = await response.json();
+            const generatedCode = data.text;
+            setCode(generatedCode);
+            setIframeSrc(`data:text/html;charset=utf-8,${encodeURIComponent(generatedCode)}`);
+        } catch (error) {
+            console.error(error);
+            setCode('// Sorry, something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full p-4 space-y-4">
+            <h3 className="text-2xl font-bold">Live Website Coder</h3>
+            <div className="flex-1 grid grid-cols-2 gap-4">
+                <div className="flex flex-col space-y-4">
+                    <Textarea 
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Describe the website or component you want to build... (e.g., a login form with a blue button)"
+                        className="h-full"
+                    />
+                    <Button onClick={handleGenerate} disabled={!prompt.trim() || isLoading}>
+                        {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <LayoutDashboard className="mr-2 h-4 w-4" />}
+                        Generate
+                    </Button>
+                </div>
+                <div className="flex flex-col space-y-4">
+                    <div className="flex-1 bg-white rounded-md overflow-hidden">
+                        <iframe src={iframeSrc} title="Live Preview" className="w-full h-full border-0" />
+                    </div>
+                    <ScrollArea className="h-48 bg-gray-800 text-white rounded-md p-4">
+                        <pre><code>{code}</code></pre>
+                    </ScrollArea>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 const AiPage = () => {
   const [activeFeature, setActiveFeature] = useState<Feature>('chat');
 
@@ -323,6 +387,8 @@ const AiPage = () => {
         return <ImageAnalysisInterface />;
       case 'journal':
         return <DreamJournalInterface />;
+      case 'livecode':
+        return <LiveCoderInterface />;
       default:
         return null;
     }
@@ -348,6 +414,10 @@ const AiPage = () => {
           <Button variant={activeFeature === 'journal' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('journal')}> 
             <BookText className="mr-2 h-4 w-4" />
             AI Dream Journal
+          </Button>
+          <Button variant={activeFeature === 'livecode' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('livecode')}> 
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Live Website Coder
           </Button>
         </nav>
       </aside>

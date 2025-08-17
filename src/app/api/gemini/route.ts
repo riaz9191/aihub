@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 // Helper function to analyze personality
 async function getPersonality(prompt: string): Promise<string> {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' })
         const personalityPrompt = `Analyze the following text and describe the author's personality and tone in 5 words or less: "${prompt}"`;
         const result = await model.generateContent(personalityPrompt);
         const response = await result.response;
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
       }
 
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' })
       
       if (feature === 'chat') {
         const personality = await getPersonality(prompt);
