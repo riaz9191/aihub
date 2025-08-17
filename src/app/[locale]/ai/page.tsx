@@ -6,8 +6,11 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, Code2, Image, Send, User, LoaderCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { Textarea } from '@/components/ui/textarea';
 
-const AiPage = () => {
+type Feature = 'chat' | 'code' | 'image';
+
+const ChatInterface = () => {
   const [messages, setMessages] = useState([
     { role: 'ai', content: 'Hello! How can I help you today?' },
   ]);
@@ -34,12 +37,10 @@ const AiPage = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ prompt: input }),
+          body: JSON.stringify({ prompt: input, feature: 'chat' }),
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to get response from AI');
-        }
+        if (!response.ok) throw new Error('Failed to get response from AI');
 
         const data = await response.json();
         setMessages([...newMessages, { role: 'ai', content: data.text }]);
@@ -56,25 +57,7 @@ const AiPage = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-      <aside className="w-64 bg-white dark:bg-gray-950 p-4 border-r dark:border-gray-800 hidden md:block">
-        <h2 className="text-xl font-bold mb-4">Features</h2>
-        <nav className="space-y-2">
-          <Button variant="secondary" className="w-full justify-start">
-            <Bot className="mr-2 h-4 w-4" />
-            Chat
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <Code2 className="mr-2 h-4 w-4" />
-            Code Generation
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <Image className="mr-2 h-4 w-4" />
-            Image Analysis
-          </Button>
-        </nav>
-      </aside>
-      <main className="flex flex-col flex-1">
+    <div className="flex flex-col h-full">
         <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
           <div className="space-y-4 max-w-4xl mx-auto">
             {messages.map((msg, index) => (
@@ -124,6 +107,79 @@ const AiPage = () => {
             </Button>
           </div>
         </div>
+    </div>
+  );
+};
+
+const CodeGenerationInterface = () => {
+    const [language, setLanguage] = useState('javascript');
+    const [prompt, setPrompt] = useState('');
+    const [generatedCode, setGeneratedCode] = useState('// Your generated code will appear here');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleGenerateCode = async () => { console.log('generate') };
+
+    return (
+        <div className="flex flex-col h-full p-4 space-y-4">
+            <h3 className="text-2xl font-bold">Code Generation</h3>
+            <div className="flex items-center space-x-2">
+                <label htmlFor="language">Language:</label>
+                <Input id="language" value={language} onChange={(e) => setLanguage(e.target.value)} className="w-48" />
+            </div>
+            <Textarea 
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe the code you want to generate... (e.g., a React button component)"
+                className="flex-1"
+            />
+            <Button onClick={handleGenerateCode} disabled={isLoading}>
+                {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Code2 className="mr-2 h-4 w-4" />}
+                Generate Code
+            </Button>
+            <ScrollArea className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-md p-4">
+                <ReactMarkdown>{` ```${language}\n${generatedCode}\n``` `}</ReactMarkdown>
+            </ScrollArea>
+        </div>
+    );
+}
+
+const AiPage = () => {
+  const [activeFeature, setActiveFeature] = useState<Feature>('chat');
+
+  const renderFeature = () => {
+    switch (activeFeature) {
+      case 'chat':
+        return <ChatInterface />;
+      case 'code':
+        return <CodeGenerationInterface />;
+      case 'image':
+        return <div className="p-4"><h3 className="text-2xl font-bold">Image Analysis (Coming Soon)</h3></div>;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+      <aside className="w-64 bg-white dark:bg-gray-950 p-4 border-r dark:border-gray-800 hidden md:block">
+        <h2 className="text-xl font-bold mb-4">Features</h2>
+        <nav className="space-y-2">
+          <Button variant={activeFeature === 'chat' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('chat')}>
+            <Bot className="mr-2 h-4 w-4" />
+            Chat
+          </Button>
+          <Button variant={activeFeature === 'code' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('code')}>
+            <Code2 className="mr-2 h-4 w-4" />
+            Code Generation
+          </Button>
+          <Button variant={activeFeature === 'image' ? 'secondary' : 'ghost'} className="w-full justify-start" onClick={() => setActiveFeature('image')}>
+            <Image className="mr-2 h-4 w-4" />
+            Image Analysis
+          </Button>
+        </nav>
+      </aside>
+      <main className="flex flex-col flex-1">
+        {renderFeature()}
       </main>
     </div>
   );
