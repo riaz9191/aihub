@@ -1,7 +1,21 @@
 import { GoogleGenerativeAI, Part } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!); 
+
+// Helper function to analyze personality
+async function getPersonality(prompt: string): Promise<string> {
+    try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const personalityPrompt = `Analyze the following text and describe the author's personality and tone in 5 words or less: "${prompt}"`;
+        const result = await model.generateContent(personalityPrompt);
+        const response = await result.response;
+        return response.text().trim();
+    } catch (error) {
+        console.error('Error getting personality:', error);
+        return 'Default'; // Fallback personality
+    }
+}
 
 // Helper function to convert a File object to a GoogleGenerativeAI.Part object.
 async function fileToGenerativePart(file: File): Promise<Part> {
@@ -27,15 +41,22 @@ export async function POST(req: NextRequest) {
       }
 
       const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-      let finalPrompt = prompt;
-      if (feature === 'code') {
-        finalPrompt = `Generate a code snippet in ${language || 'javascript'} for the following request: ${prompt}`;
+      
+      if (feature === 'chat') {
+        const personality = await getPersonality(prompt);
+        const finalPrompt = `System: Adopt this personality: [${personality}]. User: ${prompt}`;
+        const result = await model.generateContent(finalPrompt);
+        const response = await result.response;
+        const text = response.text();
+        return NextResponse.json({ text, personality });
       }
-
-      const result = await model.generateContent(finalPrompt);
-      const response = await result.response;
-      const text = response.text();
-      return NextResponse.json({ text });
+      else if (feature === 'code') {
+        const finalPrompt = `Generate a code snippet in ${language || 'javascript'} for the following request: ${prompt}`;
+        const result = await model.generateContent(finalPrompt);
+        const response = await result.response;
+        const text = response.text();
+        return NextResponse.json({ text });
+      }
     }
     // Handle multipart/form-data for image analysis
     else if (contentType.includes('multipart/form-data')) {
@@ -47,10 +68,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Image file is required' }, { status: 400 });
       }
 
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
+      const visionModel = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
       const imagePart = await fileToGenerativePart(image);
       
-      const result = await model.generateContent([prompt, imagePart]);
+      const result = await visionModel.generateContent([prompt, imagePart]);
       const response = await result.response;
       const text = response.text();
       return NextResponse.json({ text });
