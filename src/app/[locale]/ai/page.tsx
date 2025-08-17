@@ -117,7 +117,32 @@ const CodeGenerationInterface = () => {
     const [generatedCode, setGeneratedCode] = useState('// Your generated code will appear here');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleGenerateCode = async () => { console.log('generate') };
+    const handleGenerateCode = async () => { 
+        if (!prompt.trim() || isLoading) return;
+
+        setIsLoading(true);
+        setGeneratedCode('// Generating code...');
+
+        try {
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt, language, feature: 'code' }),
+            });
+
+            if (!response.ok) throw new Error('Failed to generate code');
+
+            const data = await response.json();
+            setGeneratedCode(data.text);
+        } catch (error) {
+            console.error(error);
+            setGeneratedCode('// Sorry, something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className="flex flex-col h-full p-4 space-y-4">
