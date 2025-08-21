@@ -1,4 +1,4 @@
-# 🚀 Next.js Starter Template
+# 🚀 AI HUB
 
 A production-ready Next.js boilerplate with modern tooling, comprehensive testing, and enterprise-grade features.
 
