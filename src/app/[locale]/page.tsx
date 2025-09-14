@@ -9,7 +9,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-black">
       <header className="container mx-auto flex h-20 items-center justify-between px-4 z-10">
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href="/home" className="flex items-center space-x-2">
           <Bot className="h-8 w-8 text-purple-500" />
           <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Gemini Nexus

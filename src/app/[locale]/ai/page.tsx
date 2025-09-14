@@ -192,6 +192,7 @@ const ImageAnalysisInterface = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (typeof window === 'undefined') return; // Prevent server-side execution
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             setImage(file);

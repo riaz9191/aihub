@@ -17,7 +17,6 @@ async function getPersonality(prompt: string): Promise<string> {
     }
 }
 
-
 // Helper function to convert a File object to a GoogleGenerativeAI.Part object.
 async function fileToGenerativePart(file: File): Promise<Part> {
   const base64EncodedData = Buffer.from(await file.arrayBuffer()).toString('base64');
